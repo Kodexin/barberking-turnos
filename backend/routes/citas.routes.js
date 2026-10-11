@@ -7,11 +7,19 @@ const { notificar } = require("../services/notificaciones.service");
 
 const router = express.Router();
 
+// Texto corto para mostrar en la interfaz según el resultado del envío.
+function textoEstadoCorreo(r) {
+  return r.enviado
+    ? `Correo enviado a ${r.destino}.`
+    : `No se pudo enviar el correo (${r.error}).`;
+}
+
 function citaConDetalle(citaId) {
   return db
     .prepare(
       `SELECT c.*,
               u_cliente.nombre AS cliente_nombre,
+              u_cliente.email AS cliente_email,
               u_barbero.nombre AS barbero_nombre,
               s.nombre AS servicio_nombre, s.precio AS servicio_precio
        FROM citas c
@@ -57,7 +65,7 @@ router.get("/disponibilidad", requireAuth, (req, res) => {
 });
 
 // RF02: crear una reserva (cliente).
-router.post("/", requireAuth, requireRol("cliente"), (req, res) => {
+router.post("/", requireAuth, requireRol("cliente"), async (req, res) => {
   const { barbero_id, servicio_id, fecha, hora_inicio } = req.body;
   if (!barbero_id || !servicio_id || !fecha || !hora_inicio) {
     return res.status(400).json({ error: "barbero_id, servicio_id, fecha y hora_inicio son obligatorios." });
@@ -87,9 +95,9 @@ router.post("/", requireAuth, requireRol("cliente"), (req, res) => {
     .run(req.usuario.id, barbero_id, servicio_id, fecha, slot.hora_inicio, slot.hora_fin);
 
   const cita = citaConDetalle(info.lastInsertRowid);
-  const mensaje = notificar("confirmacion", cita);
+  const resultado = await notificar("confirmacion", cita);
 
-  res.status(201).json({ cita, notificacion: mensaje });
+  res.status(201).json({ cita, notificacion: textoEstadoCorreo(resultado) });
 });
 
 // Historial del cliente autenticado.
@@ -130,7 +138,7 @@ router.get("/agenda", requireAuth, requireRol("barbero", "administrador"), (req,
 });
 
 // RF03: el barbero actualiza el estado de una cita de su agenda (ej. marcarla como atendida).
-router.patch("/:id/estado", requireAuth, requireRol("barbero", "administrador"), (req, res) => {
+router.patch("/:id/estado", requireAuth, requireRol("barbero", "administrador"), async (req, res) => {
   const { estado } = req.body;
   if (!["confirmada", "atendida", "cancelada"].includes(estado)) {
     return res.status(400).json({ error: "estado debe ser confirmada, atendida o cancelada." });
@@ -147,14 +155,14 @@ router.patch("/:id/estado", requireAuth, requireRol("barbero", "administrador"),
   );
 
   if (estado === "cancelada") {
-    notificar("cancelacion", cita);
+    await notificar("cancelacion", cita);
   }
 
   res.json(citaConDetalle(req.params.id));
 });
 
 // Reprogramar o cancelar una cita (cliente dueño de la cita, o barbero/admin).
-router.patch("/:id/reprogramar", requireAuth, (req, res) => {
+router.patch("/:id/reprogramar", requireAuth, async (req, res) => {
   const { fecha, hora_inicio } = req.body;
   const cita = citaConDetalle(req.params.id);
   if (!cita) return res.status(404).json({ error: "Cita no encontrada." });
@@ -183,12 +191,12 @@ router.patch("/:id/reprogramar", requireAuth, (req, res) => {
   ).run(fecha, slot.hora_inicio, slot.hora_fin, req.params.id);
 
   const actualizada = citaConDetalle(req.params.id);
-  notificar("confirmacion", actualizada);
+  await notificar("confirmacion", actualizada);
   res.json(actualizada);
 });
 
 // Cancelación directa (atajo sobre /estado).
-router.patch("/:id/cancelar", requireAuth, (req, res) => {
+router.patch("/:id/cancelar", requireAuth, async (req, res) => {
   const cita = citaConDetalle(req.params.id);
   if (!cita) return res.status(404).json({ error: "Cita no encontrada." });
   const esDueno = req.usuario.rol === "cliente" && cita.cliente_id === req.usuario.id;
@@ -200,18 +208,18 @@ router.patch("/:id/cancelar", requireAuth, (req, res) => {
   db.prepare("UPDATE citas SET estado = 'cancelada', actualizado_en = datetime('now') WHERE id = ?").run(
     req.params.id
   );
-  notificar("cancelacion", cita);
+  await notificar("cancelacion", cita);
   res.json({ ok: true });
 });
 
 // RF04: disparo manual de recordatorio (en producción iría en un job programado
 // que revise las citas del día siguiente; aquí se deja como acción manual del
 // barbero/administrador para la demo).
-router.post("/:id/recordatorio", requireAuth, requireRol("barbero", "administrador"), (req, res) => {
+router.post("/:id/recordatorio", requireAuth, requireRol("barbero", "administrador"), async (req, res) => {
   const cita = citaConDetalle(req.params.id);
   if (!cita) return res.status(404).json({ error: "Cita no encontrada." });
-  const mensaje = notificar("recordatorio", cita);
-  res.json({ ok: true, mensaje });
+  const resultado = await notificar("recordatorio", cita);
+  res.json({ ok: resultado.enviado, mensaje: textoEstadoCorreo(resultado) });
 });
 
 module.exports = router;
