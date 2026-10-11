@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BarberKing Turnos — Panel administrativo</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand">Barber<em>King</em> Turnos</div>
+    <div class="topbar-right">
+      <span class="whoami">Hola, <strong id="nombre-usuario"></strong><span class="badge-rol">administrador</span></span>
+      <button class="btn btn-ghost btn-small" id="btn-salir">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main>
+    <h1>Panel administrativo</h1>
+    <div class="tabs-nav">
+      <button class="btn btn-ghost active" data-vista="ingresos">Ingresos</button>
+      <button class="btn btn-ghost" data-vista="ocupacion">Ocupación</button>
+      <button class="btn btn-ghost" data-vista="clientes">Clientes frecuentes</button>
+      <button class="btn btn-ghost" data-vista="equipo">Equipo</button>
+    </div>
+
+    <!-- Ingresos -->
+    <section id="vista-ingresos">
+      <div class="panel">
+        <div class="stat-row">
+          <div class="stat-block">
+            <div class="stat-num" id="stat-ingresos">—</div>
+            <div class="stat-label">Ingresos totales (citas atendidas)</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-num" id="stat-citas-atendidas">—</div>
+            <div class="stat-label">Citas atendidas</div>
+          </div>
+        </div>
+        <h3>Ingresos por servicio</h3>
+        <table>
+          <thead><tr><th>Servicio</th><th>Citas</th><th>Ingresos</th></tr></thead>
+          <tbody id="tabla-ingresos-servicio"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Ocupación -->
+    <section id="vista-ocupacion" class="hidden">
+      <div class="panel">
+        <div class="section-head">
+          <h3 style="margin:0;">Ocupación por barbero</h3>
+          <input type="date" id="input-fecha-ocupacion" style="max-width: 200px;" />
+        </div>
+        <div id="lista-ocupacion"></div>
+      </div>
+    </section>
+
+    <!-- Clientes frecuentes -->
+    <section id="vista-clientes" class="hidden">
+      <div class="panel">
+        <h3>Clientes frecuentes</h3>
+        <table>
+          <thead><tr><th>Cliente</th><th>Correo</th><th>Citas atendidas</th><th>Gasto total</th></tr></thead>
+          <tbody id="tabla-clientes"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Equipo (alta de barberos / servicios) -->
+    <section id="vista-equipo" class="hidden">
+      <div class="panel">
+        <h3>Registrar barbero</h3>
+        <form id="form-barbero" style="max-width: 360px;">
+          <div class="field"><label>Nombre</label><input id="barbero-nombre" required /></div>
+          <div class="field"><label>Correo</label><input id="barbero-email" type="email" required /></div>
+          <div class="field"><label>Contraseña temporal</label><input id="barbero-password" type="password" minlength="6" required /></div>
+          <button class="btn btn-primary" type="submit">Registrar barbero</button>
+        </form>
+      </div>
+      <div class="panel">
+        <h3>Registrar servicio</h3>
+        <form id="form-servicio" style="max-width: 360px;">
+          <div class="field"><label>Nombre del servicio</label><input id="servicio-nombre" required /></div>
+          <div class="field"><label>Duración (minutos)</label><input id="servicio-duracion" type="number" min="5" step="5" required /></div>
+          <div class="field"><label>Precio (S/)</label><input id="servicio-precio" type="number" min="0" step="0.5" required /></div>
+          <button class="btn btn-primary" type="submit">Registrar servicio</button>
+        </form>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+  const usuario = Sesion.exigir("administrador");
+  if (usuario) iniciar();
+
+  function iniciar() {
+    document.getElementById("nombre-usuario").textContent = usuario.nombre;
+    document.getElementById("btn-salir").addEventListener("click", Sesion.cerrar);
+
+    document.querySelectorAll(".tabs-nav .btn-ghost").forEach((btn) => {
+      btn.addEventListener("click", () => cambiarVista(btn.dataset.vista));
+    });
+
+    document.getElementById("input-fecha-ocupacion").value = hoyISO();
+    document.getElementById("input-fecha-ocupacion").addEventListener("change", cargarOcupacion);
+
+    document.getElementById("form-barbero").addEventListener("submit", registrarBarbero);
+    document.getElementById("form-servicio").addEventListener("submit", registrarServicio);
+
+    cargarIngresos();
+  }
+
+  function cambiarVista(vista) {
+    ["ingresos", "ocupacion", "clientes", "equipo"].forEach((v) => {
+      document.getElementById(`vista-${v}`).classList.toggle("hidden", v !== vista);
+    });
+    document.querySelectorAll(".tabs-nav .btn-ghost").forEach((b) => b.classList.toggle("active", b.dataset.vista === vista));
+    if (vista === "ocupacion") cargarOcupacion();
+    if (vista === "clientes") cargarClientes();
+  }
+
+  async function cargarIngresos() {
+    try {
+      const data = await api("/reportes/ingresos");
+      document.getElementById("stat-ingresos").textContent = formatoMoneda(data.ingresos_totales);
+      document.getElementById("stat-citas-atendidas").textContent = data.citas_atendidas;
+      const tbody = document.getElementById("tabla-ingresos-servicio");
+      tbody.innerHTML = data.porServicio.length
+        ? data.porServicio.map((s) => `<tr><td>${s.servicio}</td><td>${s.citas}</td><td>${formatoMoneda(s.ingresos)}</td></tr>`).join("")
+        : `<tr><td colspan="3" class="empty-state">Todavía no hay citas atendidas.</td></tr>`;
+    } catch (err) {
+      mostrarToast(err.message, "error");
+    }
+  }
+
+  async function cargarOcupacion() {
+    const fecha = document.getElementById("input-fecha-ocupacion").value;
+    try {
+      const data = await api(`/reportes/ocupacion?fecha=${fecha}`);
+      const cont = document.getElementById("lista-ocupacion");
+      cont.innerHTML = data.barberos
+        .map(
+          (b) => `
+        <div style="margin-bottom:1.1rem;">
+          <div style="display:flex; justify-content:space-between; font-size:0.88rem; margin-bottom:0.3rem;">
+            <span>${b.barbero}</span>
+            <span class="timeline-meta">${b.citas} citas · ${b.ocupacion_pct}%</span>
+          </div>
+          <div class="ocupacion-bar-track"><div class="ocupacion-bar-fill" style="width:${Math.min(b.ocupacion_pct, 100)}%;"></div></div>
+        </div>`
+        )
+        .join("");
+    } catch (err) {
+      mostrarToast(err.message, "error");
+    }
+  }
+
+  async function cargarClientes() {
+    try {
+      const clientes = await api("/reportes/clientes-frecuentes");
+      const tbody = document.getElementById("tabla-clientes");
+      tbody.innerHTML = clientes.length
+        ? clientes
+            .map((c) => `<tr><td>${c.nombre}</td><td>${c.email}</td><td>${c.citas_atendidas}</td><td>${formatoMoneda(c.gasto_total)}</td></tr>`)
+            .join("")
+        : `<tr><td colspan="4" class="empty-state">Todavía no hay clientes con citas atendidas.</td></tr>`;
+    } catch (err) {
+      mostrarToast(err.message, "error");
+    }
+  }
+
+  async function registrarBarbero(e) {
+    e.preventDefault();
+    try {
+      await api("/auth/usuarios", {
+        method: "POST",
+        body: {
+          nombre: document.getElementById("barbero-nombre").value.trim(),
+          email: document.getElementById("barbero-email").value.trim(),
+          password: document.getElementById("barbero-password").value,
+          rol: "barbero",
+        },
+      });
+      mostrarToast("Barbero registrado correctamente.", "success");
+      e.target.reset();
+    } catch (err) {
+      mostrarToast(err.message, "error");
+    }
+  }
+
+  async function registrarServicio(e) {
+    e.preventDefault();
+    try {
+      await api("/servicios", {
+        method: "POST",
+        body: {
+          nombre: document.getElementById("servicio-nombre").value.trim(),
+          duracion_min: Number(document.getElementById("servicio-duracion").value),
+          precio: Number(document.getElementById("servicio-precio").value),
+        },
+      });
+      mostrarToast("Servicio registrado correctamente.", "success");
+      e.target.reset();
+    } catch (err) {
+      mostrarToast(err.message, "error");
+    }
+  }
+</script>
+</body>
+</html>

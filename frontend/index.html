@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BarberKing Turnos — Iniciar sesión</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="brand">Barber<em>King</em> Turnos</div>
+      <p>Reserva tu cita sin llamadas ni esperas.</p>
+    </div>
+
+    <div class="panel">
+      <div class="tabs">
+        <div class="tab active" data-tab="login">Iniciar sesión</div>
+        <div class="tab" data-tab="registro">Crear cuenta</div>
+      </div>
+
+      <form id="form-login" class="form-view active">
+        <div class="field">
+          <label for="login-email">Correo</label>
+          <input id="login-email" type="email" required autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="login-password">Contraseña</label>
+          <input id="login-password" type="password" required autocomplete="current-password" />
+        </div>
+        <p id="login-error" class="error-text hidden"></p>
+        <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+      </form>
+
+      <form id="form-registro" class="form-view">
+        <div class="field">
+          <label for="reg-nombre">Nombre completo</label>
+          <input id="reg-nombre" type="text" required autocomplete="name" />
+        </div>
+        <div class="field">
+          <label for="reg-email">Correo</label>
+          <input id="reg-email" type="email" required autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="reg-password">Contraseña</label>
+          <input id="reg-password" type="password" required minlength="6" autocomplete="new-password" />
+        </div>
+        <p id="registro-error" class="error-text hidden"></p>
+        <button type="submit" class="btn btn-primary btn-block">Crear cuenta de cliente</button>
+      </form>
+
+      <div class="demo-hint">
+        Cuentas de prueba — Admin: <code>admin@barberking.pe / admin123</code><br />
+        Barbero: <code>jhon@barberking.pe / barbero123</code>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+  // Si ya hay sesión activa, saltar directo a su panel.
+  const yaLogueado = Sesion.usuario();
+  if (yaLogueado && Sesion.token()) {
+    window.location.href = destinoPorRol(yaLogueado.rol);
+  }
+
+  document.querySelectorAll(".tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
+      document.querySelectorAll(".form-view").forEach((f) => f.classList.remove("active"));
+      tab.classList.add("active");
+      document.getElementById(`form-${tab.dataset.tab}`).classList.add("active");
+    });
+  });
+
+  function mostrarError(id, mensaje) {
+    const el = document.getElementById(id);
+    el.textContent = mensaje;
+    el.classList.remove("hidden");
+  }
+  function ocultarError(id) {
+    document.getElementById(id).classList.add("hidden");
+  }
+
+  document.getElementById("form-login").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    ocultarError("login-error");
+    const email = document.getElementById("login-email").value.trim();
+    const password = document.getElementById("login-password").value;
+    try {
+      const data = await api("/auth/login", { method: "POST", auth: false, body: { email, password } });
+      Sesion.guardar(data.token, data.usuario);
+      window.location.href = destinoPorRol(data.usuario.rol);
+    } catch (err) {
+      mostrarError("login-error", err.message);
+    }
+  });
+
+  document.getElementById("form-registro").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    ocultarError("registro-error");
+    const nombre = document.getElementById("reg-nombre").value.trim();
+    const email = document.getElementById("reg-email").value.trim();
+    const password = document.getElementById("reg-password").value;
+    try {
+      const data = await api("/auth/registro", { method: "POST", auth: false, body: { nombre, email, password } });
+      Sesion.guardar(data.token, data.usuario);
+      window.location.href = destinoPorRol(data.usuario.rol);
+    } catch (err) {
+      mostrarError("registro-error", err.message);
+    }
+  });
+</script>
+</body>
+</html>
