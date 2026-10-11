@@ -23,10 +23,24 @@ function citaConDetalle(citaId) {
     .get(citaId);
 }
 
+// Perú (America/Lima) no tiene horario de verano, así que el offset es fijo: UTC-5.
+// El servidor (Railway) corre en UTC, así que no podemos usar new Date() / horas
+// locales del servidor para comparar contra "ahora" en hora de Lima: hay que
+// desplazar la hora UTC real y comparar fecha/hora como texto, sin pasar por el
+// parseo ambiguo de Date con strings sin 'Z'.
+const OFFSET_LIMA_MIN = -5 * 60;
+
+function fechaHoraLimaActual() {
+  const ahoraUTC = new Date();
+  const limaMs = ahoraUTC.getTime() + OFFSET_LIMA_MIN * 60 * 1000;
+  const limaISO = new Date(limaMs).toISOString();
+  return { fecha: limaISO.slice(0, 10), hora: limaISO.slice(11, 16) };
+}
+
 function esFechaPasada(fecha, hora) {
-  const ahora = new Date();
-  const objetivo = new Date(`${fecha}T${hora}:00`);
-  return objetivo.getTime() < ahora.getTime();
+  const { fecha: fechaActual, hora: horaActual } = fechaHoraLimaActual();
+  if (fecha !== fechaActual) return fecha < fechaActual;
+  return hora < horaActual;
 }
 
 // RF02: disponibilidad en tiempo real según barbero + servicio + fecha elegidos.
