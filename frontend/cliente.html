@@ -44,6 +44,7 @@
         <div class="field" style="max-width: 220px;">
           <input type="date" id="input-fecha" />
         </div>
+        <button class="btn btn-primary" id="btn-continuar-fecha" style="margin-top:1rem;">Continuar</button>
       </div>
 
       <div id="paso-4" class="hidden">
@@ -84,6 +85,14 @@
     document.getElementById("btn-confirmar").addEventListener("click", confirmarReserva);
     document.getElementById("input-fecha").addEventListener("change", () => {
       estado.fecha = document.getElementById("input-fecha").value;
+    });
+    document.getElementById("btn-continuar-fecha").addEventListener("click", () => {
+      estado.fecha = document.getElementById("input-fecha").value;
+      if (!estado.fecha) {
+        mostrarToast("Elige una fecha primero.", "error");
+        return;
+      }
+      irPasoSiguiente(4);
     });
 
     await Promise.all([cargarServicios(), cargarBarberos()]);
