@@ -1,9 +1,9 @@
 // Módulo de Notificaciones (RF04).
 //
 // Cada notificación se registra en la tabla `notificaciones` y se envía por correo
-// real al cliente (Gmail SMTP, ver email.service.js). Si el envío falla o el correo
-// no está configurado, la cita NO se ve afectada: solo se deja constancia del canal
-// y del error en el registro.
+// real al cliente (API HTTPS de Brevo, ver email.service.js). Si el envío falla o
+// el correo no está configurado, la cita NO se ve afectada: solo se deja constancia
+// del canal y del error en el registro.
 const db = require("../db");
 const { enviarCorreo } = require("./email.service");
 
