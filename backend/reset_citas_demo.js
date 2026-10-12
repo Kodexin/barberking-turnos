@@ -79,14 +79,14 @@ const agenda = [
   { cliente: clientes.renzo,  servicio: corteBarba,      hora: "16:00", estado: "confirmada" },
 ];
 
-function insertarCita({ clienteId, servicio, hora, estado }) {
+function insertarCita({ cliente, servicio, hora, estado }) {
   const hora_fin = sumarMin(hora, servicio.duracion_min);
   const info = db
     .prepare(
       `INSERT INTO citas (cliente_id, barbero_id, servicio_id, fecha, hora_inicio, hora_fin, estado)
        VALUES (?,?,?,?,?,?,?)`
     )
-    .run(clienteId, jhon.id, servicio.id, FECHA, hora, hora_fin, estado);
+    .run(cliente, jhon.id, servicio.id, FECHA, hora, hora_fin, estado);
   return info.lastInsertRowid;
 }
 
