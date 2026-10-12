@@ -2,11 +2,16 @@
 // realistas para el 12 de octubre de 2026, repartidas entre los dos barberos.
 //
 // Se insertan directamente en la base de datos (no a través de la API de reservas),
-// así que NO se dispara ningún envío real de correo: las direcciones usadas son
-// ficticias y nunca pasan por el servicio de notificaciones.
+// así que este script en sí NO dispara ningún envío de correo. Los clientes de
+// demo sí quedan con direcciones @gmail.com con apariencia real para que la
+// presentación se vea natural; evita presionar "Enviar recordatorio" sobre sus
+// citas desde el panel del barbero, porque esa acción SÍ intenta enviar un
+// correo real a esas direcciones (y Resend, en el plan gratuito, de todas
+// formas solo entrega a tu propio correo verificado, así que fallará sin
+// afectar a nadie).
 //
 // Uso: node backend/seed_demo.js   (ejecutar en la consola/shell de Railway,
-// igual que "npm run seed", después de haber corrido el seed normal al menos una vez).
+// después de haber corrido "npm run seed" al menos una vez).
 const bcrypt = require("bcryptjs");
 const db = require("./db");
 
@@ -78,17 +83,17 @@ const corteBarba = idServicio("Corte + barba");
 const corteBarbaCejas = idServicio("Corte + barba + cejas");
 const afeitado = idServicio("Afeitado tradicional");
 
-// --- Clientes de demo (correos ficticios, nunca se les envía nada real) ---
+// --- Clientes de demo (apariencia real: nombre + @gmail.com) ---
 const clientes = {
-  maria: upsertUsuario("María Fernanda Apaza", "maria.apaza@correo-demo.pe", "cliente123", "cliente"),
-  jorge: upsertUsuario("Jorge Luis Ticona", "jorge.ticona@correo-demo.pe", "cliente123", "cliente"),
-  rosa: upsertUsuario("Rosa Elena Chambi", "rosa.chambi@correo-demo.pe", "cliente123", "cliente"),
-  carlos: upsertUsuario("Carlos Alberto Flores", "carlos.flores@correo-demo.pe", "cliente123", "cliente"),
-  diana: upsertUsuario("Diana Patricia Mamani", "diana.mamani@correo-demo.pe", "cliente123", "cliente"),
-  andres: upsertUsuario("Andrés Felipe Quispe", "andres.quispe@correo-demo.pe", "cliente123", "cliente"),
-  lucia: upsertUsuario("Lucía Beatriz Cutipa", "lucia.cutipa@correo-demo.pe", "cliente123", "cliente"),
-  miguel: upsertUsuario("Miguel Ángel Vilca", "miguel.vilca@correo-demo.pe", "cliente123", "cliente"),
-  valeria: upsertUsuario("Valeria Nicole Pari", "valeria.pari@correo-demo.pe", "cliente123", "cliente"),
+  maria: upsertUsuario("María Fernanda Apaza", "mfapaza27@gmail.com", "cliente123", "cliente"),
+  jorge: upsertUsuario("Jorge Luis Ticona", "jorgeticona.lt@gmail.com", "cliente123", "cliente"),
+  rosa: upsertUsuario("Rosa Elena Chambi", "rosae.chambi@gmail.com", "cliente123", "cliente"),
+  carlos: upsertUsuario("Carlos Alberto Flores", "carlosflores.alb@gmail.com", "cliente123", "cliente"),
+  diana: upsertUsuario("Diana Patricia Mamani", "dianapmamani@gmail.com", "cliente123", "cliente"),
+  andres: upsertUsuario("Andrés Felipe Quispe", "andresf.quispe92@gmail.com", "cliente123", "cliente"),
+  lucia: upsertUsuario("Lucía Beatriz Cutipa", "luciab.cutipa@gmail.com", "cliente123", "cliente"),
+  miguel: upsertUsuario("Miguel Ángel Vilca", "miguelangel.vilca05@gmail.com", "cliente123", "cliente"),
+  valeria: upsertUsuario("Valeria Nicole Pari", "valen.pari@gmail.com", "cliente123", "cliente"),
 };
 
 const nombreCliente = {};
