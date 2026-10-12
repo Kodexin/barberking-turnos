@@ -4,11 +4,12 @@
 // Se insertan directamente en la base de datos (no a través de la API de reservas),
 // así que este script en sí NO dispara ningún envío de correo. Los clientes de
 // demo sí quedan con direcciones @gmail.com con apariencia real para que la
-// presentación se vea natural; evita presionar "Enviar recordatorio" sobre sus
-// citas desde el panel del barbero, porque esa acción SÍ intenta enviar un
-// correo real a esas direcciones (y Resend, en el plan gratuito, de todas
-// formas solo entrega a tu propio correo verificado, así que fallará sin
-// afectar a nadie).
+// presentación se vea natural; OJO: con Brevo ya configurado, el sistema SÍ
+// puede entregar a cualquier destinatario, así que presionar "Enviar
+// recordatorio" sobre estas citas desde el panel del barbero intentará
+// mandar un correo real a esas direcciones de demo (que probablemente no
+// existen o no son tuyas). Evita hacerlo salvo que quieras probar con un
+// correo que de verdad controles.
 //
 // Uso: node backend/seed_demo.js   (ejecutar en la consola/shell de Railway,
 // después de haber corrido "npm run seed" al menos una vez).
