@@ -7,7 +7,8 @@
     "start": "node backend/server.js",
     "seed": "node backend/seed.js",
     "seed:demo": "node backend/seed_demo.js",
-    "cleanup:pre-sustentacion": "node backend/cleanup_pre_sustentacion.js"
+    "cleanup:pre-sustentacion": "node backend/cleanup_pre_sustentacion.js",
+    "reset:citas-demo": "node backend/reset_citas_demo.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
