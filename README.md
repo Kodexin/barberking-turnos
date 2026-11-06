@@ -33,6 +33,7 @@ npm start                 # http://localhost:3000
 |---------------|--------------------------|-------------|
 | Administrador | admin@barberking.pe      | admin123    |
 
+
 También puedes crear una cuenta de cliente nueva desde la pantalla de login
 ("Crear cuenta").
 
