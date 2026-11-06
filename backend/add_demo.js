@@ -1,12 +1,4 @@
-// Agrega 6 citas nuevas de demo para el 13 de octubre de 2026, todas con
-// Jhon Segales como barbero, con horarios más separados entre sí que el
-// set del 12 de octubre. 3 de las 6 son "Corte clásico".
-//
-// NO borra nada existente: solo agrega estas 6 citas nuevas (si ya existe
-// una cita en la misma fecha/hora con el mismo cliente, se salta en vez de
-// duplicarla). Como el día aún no llega, todas quedan en estado "confirmada".
-//
-// Uso: node backend/add_citas_13oct.js   (en la consola/shell de Railway)
+
 const bcrypt = require("bcryptjs");
 const db = require("./db");
 
