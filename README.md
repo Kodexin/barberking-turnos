@@ -23,7 +23,7 @@ de la primera unidad (ACS1, DV1, DV2 y Beat Chart).
 ```bash
 npm install
 cp .env.example .env     # define JWT_SECRET
-npm run seed              # crea usuarios y servicios de ejemplo
+npm run seed
 npm start                 # http://localhost:3000
 ```
 
@@ -32,9 +32,7 @@ npm start                 # http://localhost:3000
 | Rol           | Correo                  | Contraseña  |
 |---------------|--------------------------|-------------|
 | Administrador | admin@barberking.pe      | admin123    |
-| Barbero       | jhon@barberking.pe       | barbero123  |
 | Barbero       | luis@barberking.pe       | barbero123  |
-| Cliente       | cliente@demo.pe          | cliente123  |
 
 También puedes crear una cuenta de cliente nueva desde la pantalla de login
 ("Crear cuenta").
